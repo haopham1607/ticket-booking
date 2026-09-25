@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: ticketbooking
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ticketbooking}
+    username: ${DB_USER:ticketbooking}
+    password: ${DB_PASSWORD:ticketbooking}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+management:
+  endpoint:
+    health:
+      show-details: always
