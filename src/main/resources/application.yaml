@@ -11,6 +11,7 @@ spring:
     hibernate:
       ddl-auto: validate
     show-sql: true
+    open-in-view: false
 
   data:
     redis:
@@ -21,3 +22,13 @@ management:
   endpoint:
     health:
       show-details: always
+
+jwt:
+  # HS256 needs at least 32 bytes. The default is for local development only.
+  secret: ${JWT_SECRET:dev-only-secret-change-me-in-real-deployments-0123456789}
+  expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
+
+admin:
+  # No defaults on purpose: without both env vars, no admin account is created
+  email: ${ADMIN_EMAIL:admin@gmail.com}
+  password: ${ADMIN_PASSWORD:admin123}
