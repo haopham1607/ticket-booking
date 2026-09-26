@@ -2,6 +2,7 @@ package com.Hao.ticketbooking.common;
 
 import com.Hao.ticketbooking.auth.EmailAlreadyExistsException;
 import com.Hao.ticketbooking.auth.InvalidCredentialsException;
+import com.Hao.ticketbooking.event.EventNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -29,6 +30,12 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ErrorResponse> handleEmailTaken(EmailAlreadyExistsException ex) {
 		return ResponseEntity.status(HttpStatus.CONFLICT)
 				.body(new ErrorResponse("EMAIL_TAKEN", "Email is already registered"));
+	}
+
+	@ExceptionHandler(EventNotFoundException.class)
+	public ResponseEntity<ErrorResponse> handleEventNotFound(EventNotFoundException ex) {
+		return ResponseEntity.status(HttpStatus.NOT_FOUND)
+				.body(new ErrorResponse("EVENT_NOT_FOUND", "Event not found"));
 	}
 
 	@ExceptionHandler(InvalidCredentialsException.class)
