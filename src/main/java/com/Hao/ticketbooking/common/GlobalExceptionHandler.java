@@ -3,8 +3,12 @@ package com.Hao.ticketbooking.common;
 import com.Hao.ticketbooking.auth.EmailAlreadyExistsException;
 import com.Hao.ticketbooking.auth.InvalidCredentialsException;
 import com.Hao.ticketbooking.event.EventNotFoundException;
+import com.Hao.ticketbooking.hold.InvalidSeatsException;
+import com.Hao.ticketbooking.hold.RateLimitExceededException;
+import com.Hao.ticketbooking.hold.SeatsUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +40,26 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ErrorResponse> handleEventNotFound(EventNotFoundException ex) {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND)
 				.body(new ErrorResponse("EVENT_NOT_FOUND", "Event not found"));
+	}
+
+	@ExceptionHandler(InvalidSeatsException.class)
+	public ResponseEntity<ErrorResponse> handleInvalidSeats(InvalidSeatsException ex) {
+		// The message is written by our own code (never client text or internals), so it's safe to send
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+				.body(new ErrorResponse("INVALID_SEATS", ex.getMessage()));
+	}
+
+	@ExceptionHandler(SeatsUnavailableException.class)
+	public ResponseEntity<SeatsUnavailableResponse> handleSeatsUnavailable(SeatsUnavailableException ex) {
+		return ResponseEntity.status(HttpStatus.CONFLICT)
+				.body(new SeatsUnavailableResponse("SEATS_UNAVAILABLE", "Some seats are not available", ex.getSeatIds()));
+	}
+
+	@ExceptionHandler(RateLimitExceededException.class)
+	public ResponseEntity<ErrorResponse> handleRateLimit(RateLimitExceededException ex) {
+		return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+				.header(HttpHeaders.RETRY_AFTER, String.valueOf(ex.getRetryAfterSeconds()))
+				.body(new ErrorResponse("RATE_LIMITED", "Too many attempts, try again later"));
 	}
 
 	@ExceptionHandler(InvalidCredentialsException.class)

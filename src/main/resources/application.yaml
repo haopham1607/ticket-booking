@@ -28,6 +28,14 @@ jwt:
   secret: ${JWT_SECRET:dev-only-secret-change-me-in-real-deployments-0123456789}
   expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
 
+holds:
+  # How long a seat hold lasts before Redis frees the seat
+  ttl-seconds: ${HOLD_TTL_SECONDS:300}
+  # Hold attempts allowed per user per window
+  rate-limit:
+    max-attempts: ${HOLD_RATE_LIMIT_MAX:10}
+    window-seconds: ${HOLD_RATE_LIMIT_WINDOW_SECONDS:60}
+
 admin:
   # No defaults on purpose: without both env vars, no admin account is created
   email: ${ADMIN_EMAIL:admin@gmail.com}
