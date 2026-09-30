@@ -46,6 +46,31 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
             """)
     List<EventSeatCount> countByEventIds(@Param("eventIds") List<Long> eventIds);
 
+    // Every seat of an event with whether it's booked, in ONE query.
+    // LEFT JOIN keeps seats with no booking (booked = false). The status filter sits in ON,
+    // not WHERE, so unbooked seats aren't filtered out. The partial unique index guarantees
+    // at most one CONFIRMED row per seat, so each seat appears exactly once.
+    @Query(value = """
+            SELECT s.id AS id, s.row_label AS rowLabel, s.number AS number,
+                   (bs.seat_id IS NOT NULL) AS booked
+            FROM seats s
+            LEFT JOIN booking_seats bs ON bs.seat_id = s.id AND bs.status = 'CONFIRMED'
+            WHERE s.event_id = :eventId
+            ORDER BY s.row_label, s.number
+            """, nativeQuery = true)
+    List<SeatMapRow> findSeatMap(@Param("eventId") Long eventId);
+
+    // One result row of findSeatMap
+    interface SeatMapRow {
+        Long getId();
+
+        String getRowLabel();
+
+        int getNumber();
+
+        boolean isBooked();
+    }
+
     // One result row of countByEventIds; Spring fills it from the query's aliases
     interface EventSeatCount {
         Long getEventId();

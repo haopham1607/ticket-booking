@@ -11,7 +11,7 @@ public record HoldRequest(
         Long eventId,
 
         // 1 to 6 seats; @NotNull inside the brackets checks every element
-        @NotEmpty @Size(max = 6)
+        @NotEmpty @Size(min = 1, max = 6)
         List<@NotNull Long> seatIds
 ) {
 }

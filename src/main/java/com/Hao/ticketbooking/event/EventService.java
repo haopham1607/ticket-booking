@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -16,10 +17,12 @@ public class EventService {
 
     private final EventRepository eventRepository;
     private final SeatRepository seatRepository;
+    private final EventCache eventCache;
 
-    public EventService(EventRepository eventRepository, SeatRepository seatRepository) {
+    public EventService(EventRepository eventRepository, SeatRepository seatRepository, EventCache eventCache) {
         this.eventRepository = eventRepository;
         this.seatRepository = seatRepository;
+        this.eventCache = eventCache;
     }
 
     // One transaction: if generating the seats fails, the event insert is rolled back too,
@@ -56,9 +59,17 @@ public class EventService {
                 .toList();
     }
 
+    // Cache-aside: Redis first; on a miss, read Postgres and store the result for next time
     public EventResponse get(Long id) {
+        Optional<EventResponse> cached = eventCache.get(id);
+        if (cached.isPresent()) {
+            return cached.get();
+        }
+
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new EventNotFoundException(id));
-        return EventResponse.from(event, seatRepository.countByEventId(id));
+        EventResponse response = EventResponse.from(event, seatRepository.countByEventId(id));
+        eventCache.put(response);
+        return response;
     }
 }

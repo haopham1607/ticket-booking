@@ -78,7 +78,7 @@ public class HoldService {
 
         // 5. Hold them all atomically. 0 means another user holds at least one of them → 409.
         //    The script doesn't say which, so every requested seat is listed.
-        Long held = redis.execute(holdSeatsScript, holdKeys(eventId, seatIds),
+        Long held = redis.execute(holdSeatsScript, HoldKeys.of(eventId, seatIds),
                 userId.toString(), String.valueOf(holdTtl.toSeconds()));
         if (held == null || held == 0) {
             throw new SeatsUnavailableException(seatIds);
@@ -92,13 +92,6 @@ public class HoldService {
      * silently, so the response never reveals anything about other users' holds.
      */
     public void release(Long userId, ReleaseRequest request) {
-        redis.execute(releaseSeatsScript, holdKeys(request.eventId(), request.seatIds()), userId.toString());
-    }
-
-    // The one place the hold key format is defined: hold:{eventId}:{seatId}
-    private static List<String> holdKeys(Long eventId, List<Long> seatIds) {
-        return seatIds.stream()
-                .map(seatId -> "hold:" + eventId + ":" + seatId)
-                .toList();
+        redis.execute(releaseSeatsScript, HoldKeys.of(request.eventId(), request.seatIds()), userId.toString());
     }
 }

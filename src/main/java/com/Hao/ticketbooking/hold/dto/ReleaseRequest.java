@@ -10,7 +10,7 @@ public record ReleaseRequest(
         @NotNull
         Long eventId,
 
-        @NotEmpty @Size(max = 6)
+        @NotEmpty @Size(min = 1, max = 6)
         List<@NotNull Long> seatIds
 ) {
 }

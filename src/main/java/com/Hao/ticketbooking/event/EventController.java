@@ -2,6 +2,7 @@ package com.Hao.ticketbooking.event;
 
 import com.Hao.ticketbooking.event.dto.CreateEventRequest;
 import com.Hao.ticketbooking.event.dto.EventResponse;
+import com.Hao.ticketbooking.event.dto.SeatMapResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,9 +21,11 @@ import java.util.List;
 public class EventController {
 
     private final EventService eventService;
+    private final SeatMapService seatMapService;
 
-    public EventController(EventService eventService) {
+    public EventController(EventService eventService, SeatMapService seatMapService) {
         this.eventService = eventService;
+        this.seatMapService = seatMapService;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -39,5 +42,11 @@ public class EventController {
     @GetMapping("/{id}")
     public EventResponse get(@PathVariable Long id) {
         return eventService.get(id);
+    }
+
+    // Public, like the other GETs: covered by GET /api/events/** in SecurityConfig
+    @GetMapping("/{id}/seats")
+    public SeatMapResponse seatMap(@PathVariable Long id) {
+        return seatMapService.getSeatMap(id);
     }
 }

@@ -28,6 +28,10 @@ jwt:
   secret: ${JWT_SECRET:dev-only-secret-change-me-in-real-deployments-0123456789}
   expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
 
+events:
+  # How long event details stay in the Redis cache (cache-aside)
+  cache-ttl-seconds: ${EVENT_CACHE_TTL_SECONDS:600}
+
 holds:
   # How long a seat hold lasts before Redis frees the seat
   ttl-seconds: ${HOLD_TTL_SECONDS:300}
