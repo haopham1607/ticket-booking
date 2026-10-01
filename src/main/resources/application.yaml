@@ -40,6 +40,10 @@ holds:
     max-attempts: ${HOLD_RATE_LIMIT_MAX:10}
     window-seconds: ${HOLD_RATE_LIMIT_WINDOW_SECONDS:60}
 
+payment:
+  # Mock payment: share of charges declined at random, 0.0 (never) to 1.0 (always)
+  failure-rate: ${PAYMENT_FAILURE_RATE:0.0}
+
 admin:
   # No defaults on purpose: without both env vars, no admin account is created
   email: ${ADMIN_EMAIL:admin@gmail.com}

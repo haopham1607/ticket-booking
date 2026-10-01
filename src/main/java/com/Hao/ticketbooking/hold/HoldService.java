@@ -92,6 +92,26 @@ public class HoldService {
      * silently, so the response never reveals anything about other users' holds.
      */
     public void release(Long userId, ReleaseRequest request) {
-        redis.execute(releaseSeatsScript, HoldKeys.of(request.eventId(), request.seatIds()), userId.toString());
+        release(userId, request.eventId(), request.seatIds());
+    }
+
+    // Also used after a booking is committed: the seats are sold, so their holds can go
+    public void release(Long userId, Long eventId, List<Long> seatIds) {
+        redis.execute(releaseSeatsScript, HoldKeys.of(eventId, seatIds), userId.toString());
+    }
+
+    /**
+     * True only if this user currently holds every one of these seats. A missing key
+     * (never held, or expired) and a key with another user's id both count as "not held".
+     * One MGET. This is a check at one moment: a hold can still expire right after it,
+     * which is why confirming a booking also relies on the unique index in Postgres.
+     */
+    public boolean holdsAll(Long userId, Long eventId, List<Long> seatIds) {
+        List<String> holders = redis.opsForValue().multiGet(HoldKeys.of(eventId, seatIds));
+        if (holders == null || holders.size() != seatIds.size()) {
+            return false;
+        }
+        String me = userId.toString();
+        return holders.stream().allMatch(me::equals);
     }
 }

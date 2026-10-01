@@ -2,6 +2,9 @@ package com.Hao.ticketbooking.common;
 
 import com.Hao.ticketbooking.auth.EmailAlreadyExistsException;
 import com.Hao.ticketbooking.auth.InvalidCredentialsException;
+import com.Hao.ticketbooking.booking.HoldsNotOwnedException;
+import com.Hao.ticketbooking.booking.PaymentFailedException;
+import com.Hao.ticketbooking.booking.SeatNoLongerAvailableException;
 import com.Hao.ticketbooking.event.EventNotFoundException;
 import com.Hao.ticketbooking.hold.InvalidSeatsException;
 import com.Hao.ticketbooking.hold.RateLimitExceededException;
@@ -40,6 +43,24 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ErrorResponse> handleEventNotFound(EventNotFoundException ex) {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND)
 				.body(new ErrorResponse("EVENT_NOT_FOUND", "Event not found"));
+	}
+
+	@ExceptionHandler(HoldsNotOwnedException.class)
+	public ResponseEntity<ErrorResponse> handleHoldsNotOwned(HoldsNotOwnedException ex) {
+		return ResponseEntity.status(HttpStatus.CONFLICT)
+				.body(new ErrorResponse("HOLDS_NOT_OWNED", "You must hold all the seats before confirming; your holds may have expired"));
+	}
+
+	@ExceptionHandler(SeatNoLongerAvailableException.class)
+	public ResponseEntity<ErrorResponse> handleSeatNoLongerAvailable(SeatNoLongerAvailableException ex) {
+		return ResponseEntity.status(HttpStatus.CONFLICT)
+				.body(new ErrorResponse("SEAT_NO_LONGER_AVAILABLE", "A seat was booked by someone else"));
+	}
+
+	@ExceptionHandler(PaymentFailedException.class)
+	public ResponseEntity<ErrorResponse> handlePaymentFailed(PaymentFailedException ex) {
+		return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED)
+				.body(new ErrorResponse("PAYMENT_FAILED", "Payment was declined; your seats are still held"));
 	}
 
 	@ExceptionHandler(InvalidSeatsException.class)
