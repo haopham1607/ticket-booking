@@ -39,3 +39,7 @@ build/
 
 ### Secrets ###
 .env
+
+### Python (load test) ###
+load-test/.venv/
+__pycache__/
