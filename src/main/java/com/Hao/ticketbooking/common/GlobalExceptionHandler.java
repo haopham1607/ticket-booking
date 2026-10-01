@@ -2,6 +2,8 @@ package com.Hao.ticketbooking.common;
 
 import com.Hao.ticketbooking.auth.EmailAlreadyExistsException;
 import com.Hao.ticketbooking.auth.InvalidCredentialsException;
+import com.Hao.ticketbooking.booking.BookingNotFoundException;
+import com.Hao.ticketbooking.booking.EventAlreadyStartedException;
 import com.Hao.ticketbooking.booking.HoldsNotOwnedException;
 import com.Hao.ticketbooking.booking.PaymentFailedException;
 import com.Hao.ticketbooking.booking.SeatNoLongerAvailableException;
@@ -43,6 +45,18 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ErrorResponse> handleEventNotFound(EventNotFoundException ex) {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND)
 				.body(new ErrorResponse("EVENT_NOT_FOUND", "Event not found"));
+	}
+
+	@ExceptionHandler(BookingNotFoundException.class)
+	public ResponseEntity<ErrorResponse> handleBookingNotFound(BookingNotFoundException ex) {
+		return ResponseEntity.status(HttpStatus.NOT_FOUND)
+				.body(new ErrorResponse("BOOKING_NOT_FOUND", "Booking not found"));
+	}
+
+	@ExceptionHandler(EventAlreadyStartedException.class)
+	public ResponseEntity<ErrorResponse> handleEventAlreadyStarted(EventAlreadyStartedException ex) {
+		return ResponseEntity.status(HttpStatus.CONFLICT)
+				.body(new ErrorResponse("EVENT_ALREADY_STARTED", "Bookings can't be cancelled after the event has started"));
 	}
 
 	@ExceptionHandler(HoldsNotOwnedException.class)

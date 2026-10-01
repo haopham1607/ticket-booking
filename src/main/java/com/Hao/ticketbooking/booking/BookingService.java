@@ -2,13 +2,16 @@ package com.Hao.ticketbooking.booking;
 
 import com.Hao.ticketbooking.booking.dto.BookingRequest;
 import com.Hao.ticketbooking.booking.dto.BookingResponse;
+import com.Hao.ticketbooking.booking.dto.MyBookingResponse;
 import com.Hao.ticketbooking.hold.HoldService;
 import com.Hao.ticketbooking.hold.InvalidSeatsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 
@@ -17,8 +20,9 @@ import java.util.List;
  * Two layers protect against double-booking: the hold check here stops almost every
  * conflict, and the partial unique index in Postgres is the final guarantee.
  *
- * Deliberately not @Transactional: the transaction lives in BookingWriter, so this class
- * can react after it has committed or rolled back.
+ * confirm() is deliberately not @Transactional: its transaction lives in BookingWriter, so
+ * it can react after that has committed or rolled back. listMine() and cancel() are simple
+ * single-transaction operations and carry the annotation themselves.
  */
 @Service
 public class BookingService {
@@ -27,10 +31,12 @@ public class BookingService {
 
     private final HoldService holdService;
     private final BookingWriter bookingWriter;
+    private final BookingRepository bookingRepository;
 
-    public BookingService(HoldService holdService, BookingWriter bookingWriter) {
+    public BookingService(HoldService holdService, BookingWriter bookingWriter, BookingRepository bookingRepository) {
         this.holdService = holdService;
         this.bookingWriter = bookingWriter;
+        this.bookingRepository = bookingRepository;
     }
 
     public BookingResponse confirm(Long userId, BookingRequest request) {
@@ -66,5 +72,37 @@ public class BookingService {
         }
 
         return booking;
+    }
+
+    // One query for everything (see the JOIN FETCH), newest booking first
+    @Transactional(readOnly = true)
+    public List<MyBookingResponse> listMine(Long userId) {
+        return bookingRepository.findAllByUserIdWithDetails(userId).stream()
+                .map(MyBookingResponse::from)
+                .toList();
+    }
+
+    /**
+     * Cancels the user's own booking. Nothing is deleted: the booking and its seat rows become
+     * CANCELLED, the partial unique index stops counting them, and the seats are free again.
+     */
+    @Transactional
+    public void cancel(Long userId, Long bookingId) {
+        // Someone else's booking looks exactly like a missing one → 404
+        Booking booking = bookingRepository.findByIdAndUserIdWithSeats(bookingId, userId)
+                .orElseThrow(() -> new BookingNotFoundException(bookingId));
+
+        // Cancelling twice is harmless: the result is the same, so just succeed
+        if (booking.isCancelled()) {
+            return;
+        }
+
+        if (!booking.getEvent().getStartsAt().isAfter(Instant.now())) {
+            throw new EventAlreadyStartedException(bookingId);
+        }
+
+        // No save() needed: the booking was loaded in this transaction, so JPA notices the
+        // changed fields and writes the UPDATEs when the transaction commits (dirty checking)
+        booking.cancel();
     }
 }

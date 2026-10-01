@@ -52,6 +52,17 @@ public class Booking {
         seats.add(new BookingSeat(this, seat));
     }
 
+    // Cancels the booking and every seat in it. The rows stay as history; once a seat row is
+    // CANCELLED the partial unique index ignores it, so the seat can be booked again.
+    public void cancel() {
+        this.status = BookingStatus.CANCELLED;
+        seats.forEach(BookingSeat::cancel);
+    }
+
+    public boolean isCancelled() {
+        return status == BookingStatus.CANCELLED;
+    }
+
     public Long getId() {
         return id;
     }

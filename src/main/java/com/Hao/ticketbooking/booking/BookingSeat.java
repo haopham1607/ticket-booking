@@ -38,6 +38,11 @@ public class BookingSeat {
         this.status = BookingStatus.CONFIRMED;
     }
 
+    // Only called through Booking.cancel, so a booking and its seats always change together
+    void cancel() {
+        this.status = BookingStatus.CANCELLED;
+    }
+
     public BookingSeatId getId() {
         return id;
     }
